@@ -3,27 +3,29 @@ M242.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .text         0000007c  00000000  00000000  00000054  2**1
+  0 .text         000000e8  00000000  00000000  00000054  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  1 .data         00000000  00800060  00800060  000000d0  2**0
+  1 .data         00000000  00800060  00800060  0000013c  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  2 .comment      00000030  00000000  00000000  000000d0  2**0
+  2 .comment      00000030  00000000  00000000  0000013c  2**0
                   CONTENTS, READONLY
-  3 .note.gnu.avr.deviceinfo 0000003c  00000000  00000000  00000100  2**2
+  3 .note.gnu.avr.deviceinfo 0000003c  00000000  00000000  0000016c  2**2
                   CONTENTS, READONLY
-  4 .debug_aranges 00000020  00000000  00000000  0000013c  2**0
+  4 .debug_aranges 00000020  00000000  00000000  000001a8  2**0
                   CONTENTS, READONLY, DEBUGGING
-  5 .debug_info   0000056e  00000000  00000000  0000015c  2**0
+  5 .debug_info   0000067c  00000000  00000000  000001c8  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_abbrev 000004f9  00000000  00000000  000006ca  2**0
+  6 .debug_abbrev 00000595  00000000  00000000  00000844  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_line   000001c7  00000000  00000000  00000bc3  2**0
+  7 .debug_line   000002b9  00000000  00000000  00000dd9  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_frame  00000024  00000000  00000000  00000d8c  2**2
+  8 .debug_frame  00000024  00000000  00000000  00001094  2**2
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_str    000002ab  00000000  00000000  00000db0  2**0
+  9 .debug_str    00000309  00000000  00000000  000010b8  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_ranges 00000010  00000000  00000000  0000105b  2**0
+ 10 .debug_loc    00000193  00000000  00000000  000013c1  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_ranges 00000028  00000000  00000000  00001554  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -59,32 +61,136 @@ Disassembly of section .text:
   5c:	de bf       	out	0x3e, r29	; 62
   5e:	cd bf       	out	0x3d, r28	; 61
   60:	0e 94 36 00 	call	0x6c	; 0x6c <main>
-  64:	0c 94 3c 00 	jmp	0x78	; 0x78 <_exit>
+  64:	0c 94 72 00 	jmp	0xe4	; 0xe4 <_exit>
 
 00000068 <__bad_interrupt>:
   68:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
 
 0000006c <main>:
-#define LEDS_DDR	DDRB
-
-
-int main(void)
-{	
+{
+	uint8_t buttons;
+	uint8_t leds = 0x01;
+	uint8_t delay = 10;
+	
 	BUTTONS_DDR = 0x00;
   6c:	1a ba       	out	0x1a, r1	; 26
 	LEDS_DDR	= 0xFF;
   6e:	8f ef       	ldi	r24, 0xFF	; 255
   70:	87 bb       	out	0x17, r24	; 23
-    /* Replace with your application code */
-    while (1) 
-    {
-		LEDS = BUTTONS;
+	/* Replace with your application code */
+	while (1)
+	{
+		buttons = ~BUTTONS;
   72:	89 b3       	in	r24, 0x19	; 25
-  74:	88 bb       	out	0x18, r24	; 24
-  76:	fd cf       	rjmp	.-6      	; 0x72 <main+0x6>
+		leds = ~LEDS;
+  74:	48 b3       	in	r20, 0x18	; 24
+  76:	40 95       	com	r20
+		
+		switch (buttons){
+  78:	8e 3f       	cpi	r24, 0xFE	; 254
+  7a:	89 f0       	breq	.+34     	; 0x9e <main+0x32>
+  7c:	30 c0       	rjmp	.+96     	; 0xde <main+0x72>
+			
+			case 0x01:
+					for (int i = 0x01; i < 0x80; i *= 2){
+						leds = i;
+  7e:	48 2f       	mov	r20, r24
+						LEDS = ~leds;
+  80:	28 2f       	mov	r18, r24
+  82:	20 95       	com	r18
+  84:	28 bb       	out	0x18, r18	; 24
+	#else
+		//round up by default
+		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+	#endif
 
-00000078 <_exit>:
-  78:	f8 94       	cli
+	__builtin_avr_delay_cycles(__ticks_dc);
+  86:	2f e5       	ldi	r18, 0x5F	; 95
+  88:	36 ee       	ldi	r19, 0xE6	; 230
+  8a:	50 e0       	ldi	r21, 0x00	; 0
+  8c:	21 50       	subi	r18, 0x01	; 1
+  8e:	30 40       	sbci	r19, 0x00	; 0
+  90:	50 40       	sbci	r21, 0x00	; 0
+  92:	e1 f7       	brne	.-8      	; 0x8c <main+0x20>
+  94:	00 c0       	rjmp	.+0      	; 0x96 <main+0x2a>
+  96:	00 00       	nop
+		leds = ~LEDS;
+		
+		switch (buttons){
+			
+			case 0x01:
+					for (int i = 0x01; i < 0x80; i *= 2){
+  98:	88 0f       	add	r24, r24
+  9a:	99 1f       	adc	r25, r25
+  9c:	02 c0       	rjmp	.+4      	; 0xa2 <main+0x36>
+	while (1)
+	{
+		buttons = ~BUTTONS;
+		leds = ~LEDS;
+		
+		switch (buttons){
+  9e:	81 e0       	ldi	r24, 0x01	; 1
+  a0:	90 e0       	ldi	r25, 0x00	; 0
+			
+			case 0x01:
+					for (int i = 0x01; i < 0x80; i *= 2){
+  a2:	80 38       	cpi	r24, 0x80	; 128
+  a4:	91 05       	cpc	r25, r1
+  a6:	5c f3       	brlt	.-42     	; 0x7e <main+0x12>
+  a8:	80 e8       	ldi	r24, 0x80	; 128
+  aa:	90 e0       	ldi	r25, 0x00	; 0
+  ac:	15 c0       	rjmp	.+42     	; 0xd8 <main+0x6c>
+						LEDS = ~leds;
+						_delay_ms(80);
+					}
+					
+					for (int i = 0x80; i > 0x01; i /= 2){
+						leds = i;
+  ae:	48 2f       	mov	r20, r24
+						LEDS = ~leds;
+  b0:	28 2f       	mov	r18, r24
+  b2:	20 95       	com	r18
+  b4:	28 bb       	out	0x18, r18	; 24
+  b6:	2f e5       	ldi	r18, 0x5F	; 95
+  b8:	36 ee       	ldi	r19, 0xE6	; 230
+  ba:	50 e0       	ldi	r21, 0x00	; 0
+  bc:	21 50       	subi	r18, 0x01	; 1
+  be:	30 40       	sbci	r19, 0x00	; 0
+  c0:	50 40       	sbci	r21, 0x00	; 0
+  c2:	e1 f7       	brne	.-8      	; 0xbc <main+0x50>
+  c4:	00 c0       	rjmp	.+0      	; 0xc6 <main+0x5a>
+  c6:	00 00       	nop
+						leds = i;
+						LEDS = ~leds;
+						_delay_ms(80);
+					}
+					
+					for (int i = 0x80; i > 0x01; i /= 2){
+  c8:	9c 01       	movw	r18, r24
+  ca:	33 23       	and	r19, r19
+  cc:	14 f4       	brge	.+4      	; 0xd2 <main+0x66>
+  ce:	2f 5f       	subi	r18, 0xFF	; 255
+  d0:	3f 4f       	sbci	r19, 0xFF	; 255
+  d2:	c9 01       	movw	r24, r18
+  d4:	95 95       	asr	r25
+  d6:	87 95       	ror	r24
+  d8:	82 30       	cpi	r24, 0x02	; 2
+  da:	91 05       	cpc	r25, r1
+  dc:	44 f7       	brge	.-48     	; 0xae <main+0x42>
+		
+		
 
-0000007a <__stop_program>:
-  7a:	ff cf       	rjmp	.-2      	; 0x7a <__stop_program>
+		
+
+		LEDS = ~leds;
+  de:	40 95       	com	r20
+  e0:	48 bb       	out	0x18, r20	; 24
+
+	}
+  e2:	c7 cf       	rjmp	.-114    	; 0x72 <main+0x6>
+
+000000e4 <_exit>:
+  e4:	f8 94       	cli
+
+000000e6 <__stop_program>:
+  e6:	ff cf       	rjmp	.-2      	; 0xe6 <__stop_program>

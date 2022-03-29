@@ -21,7 +21,7 @@ int main(void)
 	uint8_t buttons;
 	uint8_t leds = 0x01;
 	uint8_t delay = 10;
-	uint8_t valueFromGod = 0xA2;
+	uint8_t valueFromGod = 0x3A;
 	uint8_t value;
 	uint8_t value1;
 	uint8_t value2;
@@ -34,9 +34,9 @@ int main(void)
 		buttons = ~BUTTONS;
 		leds = ~LEDS;
 		
-		value1 = valueFromGod & 0xF0;
+		value1 = valueFromGod;
 		
-		value2 = buttons & 0x0F;
+		value2 = buttons;
 		
 		value = value1 | value2;
 

@@ -25,6 +25,8 @@ int main(void)
 	uint8_t value;
 	uint8_t value1;
 	uint8_t value2;
+	uint8_t prevButton = 0x00;
+	uint8_t ledState = 1;
 	
 	BUTTONS_DDR = 0x00;
 	LEDS_DDR	= 0xFF;
@@ -34,13 +36,17 @@ int main(void)
 		buttons = ~BUTTONS;
 		leds = ~LEDS;
 		
-		value1 = valueFromGod;
-		
-		value2 = buttons;
-		
-		value = value1 | value2;
-
-		leds = value;
+		if (buttons > 0x00 && buttons != prevButton) {
+			if (ledState == 1){
+				leds = 0x00;
+				ledState = 0;
+				prevButton = buttons;
+			} else {
+				leds = 0xFF;
+				ledState = 1;
+				prevButton = buttons;
+			}
+		}
 
 
 		LEDS = ~leds;
